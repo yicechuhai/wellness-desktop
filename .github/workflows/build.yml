@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Create release package
+        run: |
+          mkdir -p release/wellness-desktop
+          cp -r backend release/wellness-desktop/
+          cp -r frontend release/wellness-desktop/
+          cp main.js release/wellness-desktop/
+          cp preload.js release/wellness-desktop/
+          cp package.json release/wellness-desktop/
+          cp README.md release/wellness-desktop/
+          cd release && zip -r ../wellness-desktop-v1.0.0.zip wellness-desktop
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "养生馆桌面版 v1.0.0"
+          body: |
+            养生馆经营跟进系统桌面版
+
+            ## 使用说明
+            1. 下载 wellness-desktop-v1.0.0.zip
+            2. 解压到任意目录
+            3. 进入目录运行: npm install && npm start
+
+            ## 前置条件
+            - 安装 Node.js 18+ (https://nodejs.org)
+          files: wellness-desktop-v1.0.0.zip
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
