@@ -1,19 +1,18 @@
 @echo off
-chcp 65001 >nul
+cd /d "%~dp0"
 echo ==========================================
-echo   养生馆经营跟进系统正在启动...
+echo   Wellness System Starting...
 echo ==========================================
 echo.
-cd /d "%~dp0"
-echo [1/3] 正在启动后端服务...
+echo [1/3] Starting backend server...
 start /b node backend\server.cjs > wellness.log 2>&1
 timeout /t 4 /nobreak >nul
-echo [2/3] 服务已启动！
-echo [3/3] 正在打开浏览器...
+echo [2/3] Server started!
+echo [3/3] Opening browser...
 start http://localhost:3001
 echo.
 echo ==========================================
-echo   系统已启动，浏览器正在打开...
-echo   请勿关闭此窗口！
+echo   System started! Browser is opening...
+echo   Do NOT close this window!
 echo ==========================================
 pause
