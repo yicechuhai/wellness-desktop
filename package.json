@@ -6,25 +6,11 @@
   "homepage": ".",
   "scripts": {
     "build": "vite build",
-    "start": "concurrently \"node backend/server.cjs\" \"electron .\"",
-    "dev": "vite build && node backend/server.cjs"
-  },
-  "build": {
-    "appId": "com.wellness.desktop",
-    "productName": "养生馆经营跟进系统",
-    "asar": false,
-    "directories": { "output": "dist" },
-    "files": ["main.js", "preload.js", "backend/**/*", "frontend/**/*", "node_modules/**/*"],
-    "win": { "target": "dir" },
-    "mac": { "target": "dir" },
-    "linux": { "target": "AppImage" }
+    "start": "node start.cjs"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.21",
-    "concurrently": "^9.0.0",
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.3",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7",
