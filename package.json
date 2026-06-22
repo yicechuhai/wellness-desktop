@@ -6,7 +6,9 @@
   "homepage": ".",
   "scripts": {
     "build": "vite build",
-    "start": "node start.cjs"
+    "start": "node start.cjs",
+    "build:portable": "electron-builder --win portable",
+    "build:setup": "electron-builder --win nsis"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.4.1",
@@ -29,5 +31,42 @@
     "react-router-dom": "^6.30.0",
     "tailwind-merge": "^3.3.0",
     "xlsx": "^0.18.5"
+  },
+  "build": {
+    "appId": "com.wellness.desktop",
+    "productName": "Wellness",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "backend/**/*",
+      "frontend/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "portable": {
+      "artifactName": "wellness-portable-${version}.exe"
+    }
   }
 }
