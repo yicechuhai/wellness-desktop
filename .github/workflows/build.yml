@@ -16,15 +16,8 @@ jobs:
         with:
           node-version: "20"
 
-      # windows-2022 has VS 2022 pre-installed, need to configure npm for native modules
-      - name: Configure npm for native compilation
-        run: |
-          npm config set msvs_version 2022
-          echo "npm config set: msvs_version=2022"
-        shell: bash
-
       - name: Install dependencies
-        run: npm install --build-from-source
+        run: npm install
         env:
           npm_config_msvs_version: 2022
 
@@ -32,7 +25,7 @@ jobs:
         run: npm run build
 
       - name: Build portable exe
-        run: npx electron-builder --win portable --config.extraMetadata.main=main.js
+        run: npx electron-builder --win portable
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
