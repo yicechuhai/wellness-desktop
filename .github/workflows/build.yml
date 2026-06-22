@@ -18,8 +18,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        env:
-          npm_config_msvs_version: 2022
 
       - name: Build frontend
         run: npm run build
