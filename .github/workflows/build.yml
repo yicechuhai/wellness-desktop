@@ -1,25 +1,29 @@
-name: Build and Release
+name: Build Wellness Desktop
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
-
-permissions:
-  contents: write
-  actions: write
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    runs-on: windows-2022
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+
+      # Install Visual Studio C++ build tools required by better-sqlite3 native addon
+      - name: Install Visual Studio build tools
+        run: |
+          choco install visualstudio2022-workload-vctools -y --no-progress
+        shell: cmd
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
       - name: Install dependencies
         run: npm install
@@ -27,44 +31,18 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Create release package
-        run: |
-          mkdir -p release/wellness-desktop
-          cp -r backend release/wellness-desktop/
-          cp -r frontend release/wellness-desktop/
-          cp start.cjs release/wellness-desktop/
-          cp start.bat release/wellness-desktop/
-          cp main.js release/wellness-desktop/
-          cp preload.js release/wellness-desktop/
-          cp package.json release/wellness-desktop/
-          cp README.md release/wellness-desktop/
-          cd release && zip -r ../wellness-desktop-v1.0.0.zip wellness-desktop
+      - name: Build portable exe
+        run: npx electron-builder --win portable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload artifact
+      - name: Build setup exe
+        run: npx electron-builder --win nsis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wellness-desktop-v1.0.0
-          path: wellness-desktop-v1.0.0.zip
-
-      - name: Create or Update Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v1.0.0
-          name: "养生馆桌面版 v1.0.0"
-          body: |
-            养生馆经营跟进系统桌面版
-
-            ## 使用说明
-            1. 下载 wellness-desktop-v1.0.0.zip
-            2. 解压到任意目录
-            3. 进入 wellness-desktop 目录
-            4. 运行 `npm install` 安装依赖
-            5. 运行 `npm start` 启动（会自动打开浏览器）
-            或者 Windows 用户直接双击 `start.bat`
-
-            ## 前置条件
-            - 安装 Node.js 18+ (https://nodejs.org)
-          files: wellness-desktop-v1.0.0.zip
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: wellness-desktop-v${{ github.run_number }}
+          path: release/
