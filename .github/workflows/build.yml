@@ -14,25 +14,25 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
 
-      # Install Visual Studio C++ build tools required by better-sqlite3 native addon
-      - name: Install Visual Studio build tools
+      # windows-2022 has VS 2022 pre-installed, need to configure npm for native modules
+      - name: Configure npm for native compilation
         run: |
-          choco install visualstudio2022-workload-vctools -y --no-progress
-        shell: cmd
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+          npm config set msvs_version 2022
+          echo "npm config set: msvs_version=2022"
+        shell: bash
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --build-from-source
+        env:
+          npm_config_msvs_version: 2022
 
       - name: Build frontend
         run: npm run build
 
       - name: Build portable exe
-        run: npx electron-builder --win portable
+        run: npx electron-builder --win portable --config.extraMetadata.main=main.js
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -44,5 +44,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wellness-desktop-v${{ github.run_number }}
+          name: wellness-desktop
           path: release/
