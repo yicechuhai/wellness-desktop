@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 const API_BASE = 'http://localhost:3001/api';
 
+function getHeaders(contentType = false): Record<string, string> {
+  const token = localStorage.getItem('wellness_token');
+  const h: Record<string, string> = {};
+  if (token) h['Authorization'] = `Bearer ${token}`;
+  if (contentType) h['Content-Type'] = 'application/json';
+  return h;
+}
+
 export function useAPI(path: string) {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -8,8 +16,8 @@ export function useAPI(path: string) {
 
   const refetch = useCallback(() => {
     setIsLoading(true); setError(null);
-    fetch(API_BASE + path)
-      .then(r => r.ok ? r.json() : Promise.reject(new Error('API ' + r.status)))
+    fetch(API_BASE + path, { headers: getHeaders() })
+      .then(r => { if (r.status === 401) { localStorage.removeItem('wellness_token'); window.location.reload(); return Promise.reject(new Error('Session expired')); } return r.ok ? r.json() : Promise.reject(new Error('API ' + r.status)); })
       .then(setData)
       .catch(e => setError(e.message))
       .finally(() => setIsLoading(false));
@@ -25,9 +33,10 @@ export function useAPIMutation(path: string) {
     setIsLoading(true);
     const res = await fetch(API_BASE + path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(true),
       body: JSON.stringify(body),
     });
+    if (res.status === 401) { localStorage.removeItem('wellness_token'); window.location.reload(); throw new Error('Session expired'); }
     const data = await res.json();
     setIsLoading(false);
     return data;

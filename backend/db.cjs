@@ -5,7 +5,6 @@ const os = require('os');
 const dbDir = path.join(os.homedir(), '.wellness');
 const dbPath = path.join(dbDir, 'data.db');
 
-// Ensure directory exists
 try { require('fs').mkdirSync(dbDir, { recursive: true }); } catch(e) {}
 
 const db = new Database(dbPath);
@@ -57,10 +56,40 @@ CREATE TABLE IF NOT EXISTS followup_task (
   status TEXT DEFAULT 'pending', owner_staff TEXT,
   created_at INTEGER DEFAULT (unixepoch())
 );
+CREATE TABLE IF NOT EXISTS user (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT DEFAULT 'therapist' CHECK(role IN ('admin','manager','therapist','reception')),
+  status TEXT DEFAULT 'active' CHECK(status IN ('active','disabled')),
+  phone TEXT,
+  created_at INTEGER DEFAULT (unixepoch())
+);
+CREATE TABLE IF NOT EXISTS system_setting (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at INTEGER DEFAULT (unixepoch())
+);
 `;
 db.exec(initSQL);
 
-// Seed data if empty
+// Create default admin if no users
+const hasUsers = db.prepare('SELECT COUNT(*) as c FROM user').get();
+if (hasUsers.c === 0) {
+  // Default password: admin123
+  const bcrypt = require('bcryptjs');
+  const hash = bcrypt.hashSync('admin123', 10);
+  db.prepare('INSERT INTO user (username, password_hash, name, role, status) VALUES (?,?,?,?,?)')
+    .run('admin', hash, '系统管理员', 'admin', 'active');
+  db.prepare('INSERT INTO user (username, password_hash, name, role, status) VALUES (?,?,?,?,?)')
+    .run('manager', hash, '店长', 'manager', 'active');
+  db.prepare('INSERT INTO user (username, password_hash, name, role, status) VALUES (?,?,?,?,?)')
+    .run('front', hash, '前台', 'reception', 'active');
+  console.log('[DB] Default users created (admin/admin123, manager/admin123, front/admin123)');
+}
+
+// Seed business data if empty
 const hasData = db.prepare('SELECT COUNT(*) as c FROM customer').get();
 if (hasData.c === 0) {
   const insC = db.prepare('INSERT INTO customer (name, phone, type, source, concern, first_visit_date, last_visit_date, owner_staff) VALUES (?,?,?,?,?,?,?,?)');

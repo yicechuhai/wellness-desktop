@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAPI, useAPIMutation } from '../hooks/useApi';
+import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent } from '../components/ui/card';
-import { CreditCard, Plus, Trash2, X, Save } from 'lucide-react';
+import { CreditCard, Plus, Trash2, X, Save, Download } from 'lucide-react';
 
 export default function SaleRecords() {
+  const { can } = useAuth();
   const { data, isLoading, refetch } = useAPI('/sales');
   const createMut = useAPIMutation('/sales');
   const [line, setLine] = useState('all');
@@ -27,11 +29,8 @@ export default function SaleRecords() {
     refetch();
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete?')) return;
-    await fetch(`http://localhost:3001/api/sales/${id}`, { method: 'DELETE' });
-    refetch();
-  };
+  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`http://localhost:3001/api/sales/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
+  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('http://localhost:3001/api/export/sale_record', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `sales_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Loading...</div>;
 
@@ -42,23 +41,16 @@ export default function SaleRecords() {
         <Card className="bg-blue-50"><CardContent className="p-3 text-center"><p className="text-xs text-gray-500">Clinic</p><p className="text-lg font-bold text-blue-600">{cTotal.toFixed(2)}</p></CardContent></Card>
       </div>
       <div className="flex gap-2">
-        {[{ k: 'all', l: 'All' }, { k: 'wellness', l: 'Wellness' }, { k: 'clinic', l: 'Clinic' }].map(t =>
-          <button key={t.k} onClick={() => setLine(t.k)} className={'px-3 py-1.5 rounded-lg text-xs ' + (line === t.k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600')}>{t.l}</button>
-        )}
-        <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700 ml-auto"><Plus size={14} /> Add</button>
+        {[{ k: 'all', l: 'All' }, { k: 'wellness', l: 'Wellness' }, { k: 'clinic', l: 'Clinic' }].map(t => <button key={t.k} onClick={() => setLine(t.k)} className={'px-3 py-1.5 rounded-lg text-xs ' + (line === t.k ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600')}>{t.l}</button>)}
+        {can('sale.create') && <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700 ml-auto"><Plus size={14} /> Add</button>}
+        {can('export') && <button onClick={doExport} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 hover:bg-green-700" title="Export"><Download size={14} /></button>}
       </div>
       <div className="text-xs text-gray-500">{records.length} records</div>
       <div className="space-y-2">{records.map((r: any) =>
         <Card key={r.id}><CardContent className="p-3">
           <div className="flex justify-between items-start">
-            <div className="flex gap-2 items-center">
-              <CreditCard size={16} className={r.business_line === 'wellness' ? 'text-green-500' : 'text-blue-500'} />
-              <span className="font-medium text-sm">{r.customer_name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold">{(r.total_amount || 0).toFixed(2)}</span>
-              <button onClick={() => handleDelete(r.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
-            </div>
+            <div className="flex gap-2 items-center"><CreditCard size={16} className={r.business_line === 'wellness' ? 'text-green-500' : 'text-blue-500'} /><span className="font-medium text-sm">{r.customer_name}</span></div>
+            <div className="flex items-center gap-2"><span className="text-sm font-bold">{(r.total_amount || 0).toFixed(2)}</span>{can('sale.delete') && <button onClick={() => handleDelete(r.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>}</div>
           </div>
           <div className="flex gap-3 mt-1 text-xs text-gray-500"><span>{r.item}</span><span>{r.date}</span><span>{r.business_line}</span></div>
         </CardContent></Card>
@@ -66,9 +58,7 @@ export default function SaleRecords() {
 
       {showForm && <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" onClick={() => setShowForm(false)}>
         <div className="bg-white rounded-t-xl md:rounded-xl w-full md:w-[500px] max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-          <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-            <h3 className="font-bold">New Sale</h3><button onClick={() => setShowForm(false)} className="text-gray-400"><X size={18} /></button>
-          </div>
+          <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center"><h3 className="font-bold">New Sale</h3><button onClick={() => setShowForm(false)} className="text-gray-400"><X size={18} /></button></div>
           <form onSubmit={handleSubmit} className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-xs text-gray-500">Date *</label><input type="date" required value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>

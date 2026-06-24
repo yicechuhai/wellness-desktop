@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAPI, useAPIMutation } from '../hooks/useApi';
 import { Card, CardContent } from '../components/ui/card';
-import { ClipboardList, Plus, Trash2, X, Save } from 'lucide-react';
+import { ClipboardList, Plus, Trash2, X, Save, Download } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 export default function ServiceRecords() {
+  const { can } = useAuth();
   const { data, isLoading, refetch } = useAPI('/services');
   const { data: itemsData } = useAPI('/items');
   const createMut = useAPIMutation('/services');
@@ -37,7 +39,8 @@ export default function ServiceRecords() {
       <div className="flex gap-2">
         <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
         {filterDate && <button onClick={() => setFilterDate('')} className="text-sm text-blue-600 px-2">Clear</button>}
-        <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700 ml-auto"><Plus size={16} /> Add</button>
+        {can('service.create') && <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700 ml-auto"><Plus size={16} /> Add</button>}
+        {can('export') && <button onClick={() => { const t = localStorage.getItem('wellness_token'); fetch('http://localhost:3001/api/export/service_record', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `services_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); }} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-green-700" title="Export"><Download size={16} /></button>}
       </div>
       <div className="text-xs text-gray-500">{records.length} records</div>
       <div className="space-y-2">{records.map((r: any) =>
@@ -50,7 +53,7 @@ export default function ServiceRecords() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400">{r.date}</span>
-              <button onClick={() => handleDelete(r.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
+              {can('service.delete') && <button onClick={() => handleDelete(r.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>}
             </div>
           </div>
           <div className="flex gap-3 mt-1 text-xs text-gray-500">

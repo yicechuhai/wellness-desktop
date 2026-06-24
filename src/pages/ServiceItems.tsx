@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAPI } from '../hooks/useApi';
+import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent } from '../components/ui/card';
-import { Package, Plus, Edit2, Trash2, X, Save } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, X, Save, Download } from 'lucide-react';
 
 export default function ServiceItems() {
+  const { can } = useAuth();
   const { data, isLoading, refetch } = useAPI('/items');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -12,22 +14,19 @@ export default function ServiceItems() {
 
   const resetForm = () => { setForm({ name: '', single_price: '', package_price: '', package_times: '10', activity_price: '', description: '', contraindication: '' }); setEditing(null); };
   const openCreate = () => { resetForm(); setShowForm(true); };
-  const openEdit = (item: any) => {
-    setEditing(item);
-    setForm({ name: item.name || '', single_price: String(item.single_price || ''), package_price: String(item.package_price || ''), package_times: String(item.package_times || '10'), activity_price: String(item.activity_price || ''), description: item.description || '', contraindication: item.contraindication || '' });
-    setShowForm(true);
-  };
+  const openEdit = (item: any) => { setEditing(item); setForm({ name: item.name || '', single_price: String(item.single_price || ''), package_price: String(item.package_price || ''), package_times: String(item.package_times || '10'), activity_price: String(item.activity_price || ''), description: item.description || '', contraindication: item.contraindication || '' }); setShowForm(true); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return alert('Enter item name');
     const body = { name: form.name, single_price: parseFloat(form.single_price) || 0, package_price: parseFloat(form.package_price) || 0, package_times: parseInt(form.package_times) || 10, activity_price: parseFloat(form.activity_price) || 0, description: form.description, contraindication: form.contraindication };
-    if (editing) { await fetch(`http://localhost:3001/api/items/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
-    else { await fetch('http://localhost:3001/api/items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
+    if (editing) { await fetch(`http://localhost:3001/api/items/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(body) }); }
+    else { await fetch('http://localhost:3001/api/items', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(body) }); }
     setShowForm(false); resetForm(); refetch();
   };
 
-  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`http://localhost:3001/api/items/${id}`, { method: 'DELETE' }); refetch(); };
+  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`http://localhost:3001/api/items/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
+  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('http://localhost:3001/api/export/service_item', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `items_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Loading...</div>;
 
@@ -35,15 +34,18 @@ export default function ServiceItems() {
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <div className="text-xs text-gray-500">{items.length} items</div>
-        <button onClick={openCreate} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700"><Plus size={16} /> Add</button>
+        <div className="flex gap-2">
+          {can('item.create') && <button onClick={openCreate} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700"><Plus size={16} /> Add</button>}
+          {can('export') && <button onClick={doExport} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-green-700" title="Export"><Download size={16} /></button>}
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{items.map((item: any) =>
         <Card key={item.id}><CardContent className="p-4">
           <div className="flex justify-between items-start">
             <div className="flex gap-2 items-center"><Package size={16} className="text-blue-500" /><span className="font-medium">{item.name}</span></div>
             <div className="flex gap-1">
-              <button onClick={() => openEdit(item)} className="p-1 text-blue-600 hover:bg-blue-50 rounded"><Edit2 size={14} /></button>
-              <button onClick={() => handleDelete(item.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
+              {can('item.edit') && <button onClick={() => openEdit(item)} className="p-1 text-blue-600 hover:bg-blue-50 rounded"><Edit2 size={14} /></button>}
+              {can('item.delete') && <button onClick={() => handleDelete(item.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center mt-3">
@@ -58,9 +60,7 @@ export default function ServiceItems() {
 
       {showForm && <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" onClick={() => setShowForm(false)}>
         <div className="bg-white rounded-t-xl md:rounded-xl w-full md:w-[500px] max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-          <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-            <h3 className="font-bold">{editing ? 'Edit Item' : 'New Item'}</h3><button onClick={() => setShowForm(false)} className="text-gray-400"><X size={18} /></button>
-          </div>
+          <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center"><h3 className="font-bold">{editing ? 'Edit' : 'New'} Item</h3><button onClick={() => setShowForm(false)} className="text-gray-400"><X size={18} /></button></div>
           <form onSubmit={handleSubmit} className="p-4 space-y-3">
             <div><label className="text-xs text-gray-500">Name *</label><input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
             <div className="grid grid-cols-3 gap-3">

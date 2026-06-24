@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAPI, useAPIMutation } from '../hooks/useApi';
+import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent } from '../components/ui/card';
-import { Repeat, Plus, Trash2, X, Save } from 'lucide-react';
+import { Repeat, Plus, Trash2, X, Save, Download } from 'lucide-react';
 
 export default function MembershipCards() {
+  const { can } = useAuth();
   const { data, isLoading, refetch } = useAPI('/cards');
   const createMut = useAPIMutation('/cards');
   const [showForm, setShowForm] = useState(false);
@@ -20,11 +22,8 @@ export default function MembershipCards() {
     refetch();
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete?')) return;
-    await fetch(`http://localhost:3001/api/cards/${id}`, { method: 'DELETE' });
-    refetch();
-  };
+  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`http://localhost:3001/api/cards/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
+  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('http://localhost:3001/api/export/membership_card', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `cards_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Loading...</div>;
 
@@ -35,8 +34,9 @@ export default function MembershipCards() {
         <Card className="bg-green-50"><CardContent className="p-3 text-center"><p className="text-xs text-gray-500">Active</p><p className="text-xl font-bold text-green-600">{cards.filter((c: any) => c.status === 'active').length}</p></CardContent></Card>
         <Card className="bg-orange-50"><CardContent className="p-3 text-center"><p className="text-xs text-gray-500">Expiring</p><p className="text-xl font-bold text-orange-600">{cards.filter((c: any) => c.status === 'expiring').length}</p></CardContent></Card>
       </div>
-      <div className="flex justify-end">
-        <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700"><Plus size={16} /> New Card</button>
+      <div className="flex justify-end gap-2">
+        {can('card.create') && <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700"><Plus size={16} /> New Card</button>}
+        {can('export') && <button onClick={doExport} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-green-700" title="Export"><Download size={16} /></button>}
       </div>
       <div className="space-y-2">{cards.map((c: any) =>
         <Card key={c.id}><CardContent className="p-3">
@@ -44,11 +44,9 @@ export default function MembershipCards() {
             <div className="flex gap-2 items-center">
               <Repeat size={16} className={c.status === 'expiring' ? 'text-orange-500' : 'text-blue-500'} />
               <span className="font-medium text-sm">{c.customer_name}</span>
-              <span className={'text-xs px-2 py-0.5 rounded ' + (c.status === 'expiring' ? 'bg-orange-100 text-orange-700' : c.status === 'used_up' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700')}>
-                {c.status === 'expiring' ? 'Expiring' : c.status === 'used_up' ? 'Used' : 'Active'}
-              </span>
+              <span className={'text-xs px-2 py-0.5 rounded ' + (c.status === 'expiring' ? 'bg-orange-100 text-orange-700' : c.status === 'used_up' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700')}>{c.status === 'expiring' ? 'Expiring' : c.status === 'used_up' ? 'Used' : 'Active'}</span>
             </div>
-            <button onClick={() => handleDelete(c.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
+            {can('card.delete') && <button onClick={() => handleDelete(c.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>}
           </div>
           <div className="mt-2">
             <div className="flex justify-between text-xs text-gray-500 mb-1"><span>{c.card_name}</span><span>{c.used_times}/{c.total_times + c.gift_times}x</span></div>
@@ -60,13 +58,11 @@ export default function MembershipCards() {
 
       {showForm && <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" onClick={() => setShowForm(false)}>
         <div className="bg-white rounded-t-xl md:rounded-xl w-full md:w-[500px] max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-          <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-            <h3 className="font-bold">New Card</h3><button onClick={() => setShowForm(false)} className="text-gray-400"><X size={18} /></button>
-          </div>
+          <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center"><h3 className="font-bold">New Card</h3><button onClick={() => setShowForm(false)} className="text-gray-400"><X size={18} /></button></div>
           <form onSubmit={handleSubmit} className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-xs text-gray-500">Customer *</label><input required value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
-              <div><label className="text-xs text-gray-500">Card Name *</label><input required value={form.card_name} onChange={e => setForm({ ...form, card_name: e.target.value })} placeholder="e.g. 10x Shoulder" className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+              <div><label className="text-xs text-gray-500">Card Name *</label><input required value={form.card_name} onChange={e => setForm({ ...form, card_name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div><label className="text-xs text-gray-500">Amount</label><input type="number" value={form.purchase_amount} onChange={e => setForm({ ...form, purchase_amount: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
@@ -74,7 +70,7 @@ export default function MembershipCards() {
               <div><label className="text-xs text-gray-500">Gift</label><input type="number" value={form.gift_times} onChange={e => setForm({ ...form, gift_times: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs text-gray-500">Items</label><input value={form.applicable_items} onChange={e => setForm({ ...form, applicable_items: e.target.value })} placeholder="e.g. Shoulder" className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
+              <div><label className="text-xs text-gray-500">Items</label><input value={form.applicable_items} onChange={e => setForm({ ...form, applicable_items: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
               <div><label className="text-xs text-gray-500">Expire</label><input type="date" value={form.expire_date} onChange={e => setForm({ ...form, expire_date: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" /></div>
             </div>
             <div className="flex gap-2 pt-2">
