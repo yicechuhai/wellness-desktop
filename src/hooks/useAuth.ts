@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 
 export interface AuthUser {
   id: number;
@@ -80,18 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (perms[action] || ['admin']).includes(user.role);
   }, [user]);
 
-  const Provider = AuthContext.Provider;
   const value = { user, isLoading, login, logout, hasRole, can };
 
-  return (
-    <Provider value={value}>
-      {children}
-    </Provider>
-  );
+  return React.createElement(AuthContext.Provider, { value }, children);
 }
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be inside AuthProvider');
-  return ctx;
-}
+  return 
