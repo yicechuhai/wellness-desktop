@@ -7,14 +7,16 @@ export interface AuthUser {
   role: 'admin' | 'manager' | 'therapist' | 'reception';
 }
 
-const AuthContext = createContext<{
+interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   hasRole: (roles: string[]) => boolean;
   can: (action: string) => boolean;
-} | null>(null);
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
