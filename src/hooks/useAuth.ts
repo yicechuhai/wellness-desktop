@@ -80,10 +80,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (perms[action] || ['admin']).includes(user.role);
   }, [user]);
 
+  const Provider = AuthContext.Provider;
+  const value = { user, isLoading, login, logout, hasRole, can };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, hasRole, can }}>
+    <Provider value={value}>
       {children}
-    </AuthContext.Provider>
+    </Provider>
   );
 }
 
