@@ -32,7 +32,7 @@ function requireRole(roles) {
 // ========== AUTH ==========
 router.post('/auth/login', (req, res) => {
   const { username, password } = req.body;
-  const user = db.prepare('SELECT * FROM user WHERE username = ? AND status = "active"').get(username);
+  const user = db.prepare("SELECT * FROM user WHERE username = ? AND status = 'active'").get(username);
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({ error: 'Invalid username or password' });
   }
