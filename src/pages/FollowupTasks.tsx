@@ -24,7 +24,7 @@ export default function FollowupTasks() {
   const [form, setForm] = useState({ customer_name: '', task_type: 'new_experience', due_date: new Date().toISOString().slice(0, 10), reason: '', suggested_message: '', owner_staff: '' });
   const tasks = (data || []).filter((t: any) => filter === 'all' || t.status === filter);
 
-  const handleDone = async (id: number) => { await fetch(`/api/followups/${id}/done`, { method: 'PUT', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
+  const handleDone = async (id: number) => { await fetch(`/wellness/api/followups/${id}/done`, { method: 'PUT', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.customer_name.trim()) return alert('Enter customer name');
@@ -33,8 +33,8 @@ export default function FollowupTasks() {
     setForm({ customer_name: '', task_type: 'new_experience', due_date: new Date().toISOString().slice(0, 10), reason: '', suggested_message: '', owner_staff: '' });
     refetch();
   };
-  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`/api/followups/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
-  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('/api/export/followup_task', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `followups_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
+  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`/wellness/api/followups/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
+  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('/wellness/api/export/followup_task', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `followups_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Loading...</div>;
 
