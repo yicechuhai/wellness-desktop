@@ -38,16 +38,16 @@ export default function Customers() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return alert('Name required');
-    if (editing) { await fetch(`http://localhost:3001/api/customers/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(form) }); }
+    if (editing) { await fetch(`/api/customers/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(form) }); }
     else { await createMut.post(form); }
     setShowForm(false); resetForm(); refetch();
   };
 
-  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`http://localhost:3001/api/customers/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); setSelected(null); };
+  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`/api/customers/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); setSelected(null); };
 
   const handleExport = () => {
     const token = localStorage.getItem('wellness_token');
-    fetch('http://localhost:3001/api/export/customer', { headers: { Authorization: `Bearer ${token}` } })
+    fetch('/api/export/customer', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
       .then(blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `customers_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(url); });
   };

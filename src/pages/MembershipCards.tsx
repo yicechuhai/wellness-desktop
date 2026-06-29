@@ -22,8 +22,8 @@ export default function MembershipCards() {
     refetch();
   };
 
-  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`http://localhost:3001/api/cards/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
-  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('http://localhost:3001/api/export/membership_card', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `cards_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
+  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`/api/cards/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
+  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('/api/export/membership_card', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `cards_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Loading...</div>;
 

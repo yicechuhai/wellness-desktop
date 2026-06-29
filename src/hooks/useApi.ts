@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = '/api';
 
 function getHeaders(contentType = false): Record<string, string> {
   const token = localStorage.getItem('wellness_token');

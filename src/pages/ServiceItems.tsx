@@ -20,13 +20,13 @@ export default function ServiceItems() {
     e.preventDefault();
     if (!form.name.trim()) return alert('Enter item name');
     const body = { name: form.name, single_price: parseFloat(form.single_price) || 0, package_price: parseFloat(form.package_price) || 0, package_times: parseInt(form.package_times) || 10, activity_price: parseFloat(form.activity_price) || 0, description: form.description, contraindication: form.contraindication };
-    if (editing) { await fetch(`http://localhost:3001/api/items/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(body) }); }
-    else { await fetch('http://localhost:3001/api/items', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(body) }); }
+    if (editing) { await fetch(`/api/items/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(body) }); }
+    else { await fetch('/api/items', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify(body) }); }
     setShowForm(false); resetForm(); refetch();
   };
 
-  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`http://localhost:3001/api/items/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
-  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('http://localhost:3001/api/export/service_item', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `items_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
+  const handleDelete = async (id: number) => { if (!confirm('Delete?')) return; await fetch(`/api/items/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } }); refetch(); };
+  const doExport = () => { const t = localStorage.getItem('wellness_token'); fetch('/api/export/service_item', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `items_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); };
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Loading...</div>;
 

@@ -28,7 +28,7 @@ export default function ServiceRecords() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete?')) return;
-    await fetch(`http://localhost:3001/api/services/${id}`, { method: 'DELETE' });
+    await fetch(`/api/services/${id}`, { method: 'DELETE' });
     refetch();
   };
 
@@ -40,7 +40,7 @@ export default function ServiceRecords() {
         <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
         {filterDate && <button onClick={() => setFilterDate('')} className="text-sm text-blue-600 px-2">Clear</button>}
         {can('service.create') && <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-blue-700 ml-auto"><Plus size={16} /> Add</button>}
-        {can('export') && <button onClick={() => { const t = localStorage.getItem('wellness_token'); fetch('http://localhost:3001/api/export/service_record', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `services_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); }} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-green-700" title="Export"><Download size={16} /></button>}
+        {can('export') && <button onClick={() => { const t = localStorage.getItem('wellness_token'); fetch('/api/export/service_record', { headers: { Authorization: `Bearer ${t}` } }).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `services_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); URL.revokeObjectURL(u); }); }} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-green-700" title="Export"><Download size={16} /></button>}
       </div>
       <div className="text-xs text-gray-500">{records.length} records</div>
       <div className="space-y-2">{records.map((r: any) =>

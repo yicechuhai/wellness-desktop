@@ -29,7 +29,7 @@ export default function AdminUsers() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editing) {
-      await fetch(`http://localhost:3001/api/users/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify({ name: form.name, role: form.role, status: editing.status, phone: form.phone }) });
+      await fetch(`/api/users/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify({ name: form.name, role: form.role, status: editing.status, phone: form.phone }) });
     } else {
       if (!form.password) return alert('Password required');
       await createMut.post({ username: form.username, password: form.password, name: form.name, role: form.role, phone: form.phone });
@@ -40,13 +40,13 @@ export default function AdminUsers() {
   const handlePwd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPwd || !pwdForm) return;
-    await fetch(`http://localhost:3001/api/users/${pwdForm.id}/password`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify({ password: newPwd }) });
+    await fetch(`/api/users/${pwdForm.id}/password`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wellness_token')}` }, body: JSON.stringify({ password: newPwd }) });
     setPwdForm(null); setNewPwd(''); alert('Password updated');
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this user?')) return;
-    await fetch(`http://localhost:3001/api/users/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } });
+    await fetch(`/api/users/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('wellness_token')}` } });
     refetch();
   };
 

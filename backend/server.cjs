@@ -21,8 +21,8 @@ const port = process.env.PORT || 3001;
 // Only listen if this is the main process (not required from electron main)
 // In Electron, the server is started by main.js requiring this module
 if (!process.env.ELECTRON_RUN_AS_NODE) {
-  const server = app.listen(port, '127.0.0.1', () => {
-    console.log('[Wellness] Server running on http://localhost:' + port);
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log('[Wellness] Server running on http://0.0.0.0:' + port);
   });
   module.exports = server;
 } else {

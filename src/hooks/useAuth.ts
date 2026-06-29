@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('wellness_token');
     if (token) {
-      fetch('http://localhost:3001/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.ok ? r.json() : null)
         .then(data => { if (data) setUser(data); else localStorage.removeItem('wellness_token'); })
         .catch(() => localStorage.removeItem('wellness_token'))
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
-    const res = await fetch('http://localhost:3001/api/auth/login', {
+    const res = await fetch('/api/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
